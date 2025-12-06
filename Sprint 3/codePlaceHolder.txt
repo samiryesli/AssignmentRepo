@@ -1,0 +1,173 @@
+# Meditrack - Sprint 3 CMSC-355 Fall 2025
+# By  Samir Yesli, Zain Al Rawi, Kyle Uson, Jamie Torrico, Rayyan Siddiqui
+# 
+
+import tkinter
+from tkinter import messagebox
+import re  # needed for email validation
+
+window = tkinter.Tk()
+window.title("Meditrack")
+window.geometry('440x540')
+window.configure(bg="#0C1155")
+
+# Very small "database"
+users = {
+    "existinguser@example.com": {"name": "Existing User", "password": "ExistingPassword"}
+}
+
+def open_register_window():
+    reg = tkinter.Toplevel(window)
+    reg.title("Create Account")
+    reg.geometry("380x260")
+    reg.configure(bg="#0C1155")
+
+    # Widgets
+    tk_label = lambda text: tkinter.Label(reg, text=text, bg="#0C1155", fg="#7968A1", font=("Arial", 14))
+    tk_entry = lambda show=None: tkinter.Entry(reg, font=("Arial", 14), show=show, width=25)
+
+    name_label = tk_label("Full name")
+    name_entry = tk_entry()
+
+    email_label = tk_label("Email")
+    email_entry = tk_entry()
+
+    pw_label = tk_label("Password")
+    pw_entry = tk_entry(show="*")
+
+    confirm_label = tk_label("Confirm password")
+    confirm_entry = tk_entry(show="*")
+
+    def create_account():
+        full = name_entry.get()
+        email = email_entry.get()
+        pw = pw_entry.get()
+        cpw = confirm_entry.get()
+
+        # EMPTY FIELD CHECK
+        if full == "" or email == "" or pw == "" or cpw == "":
+            messagebox.showerror("Error", "Please fill in all fields.")
+            return
+
+        # TC04 – INVALID EMAIL FORMAT
+        email_pattern = r"[^@]+@[^@]+\.[^@]+"
+        if not re.match(email_pattern, email):
+            messagebox.showerror("Invalid Email", "Please enter a valid email address.")
+            return
+
+        # TC02 – PASSWORD TOO SHORT
+        if len(pw) < 8:
+            messagebox.showerror("Error", "Password must be at least 8 characters.")
+            return
+
+        # PASSWORD MISMATCH
+        if pw != cpw:
+            messagebox.showerror("Error", "Passwords do not match.")
+            return
+
+        # TC03 – DUPLICATE EMAIL
+        if email in users:
+            messagebox.showerror("Error", "Email already exists.")
+            return
+
+        # TC01 – SUCCESS
+        users[email] = {"name": full, "password": pw}
+        messagebox.showinfo("Success", "Account created successfully.")
+        reg.destroy()
+
+    # Layout
+    name_label.grid(row=0, column=0, padx=20, pady=10)
+    name_entry.grid(row=0, column=1)
+
+    email_label.grid(row=1, column=0, padx=20, pady=10)
+    email_entry.grid(row=1, column=1)
+
+    pw_label.grid(row=2, column=0, padx=20, pady=10)
+    pw_entry.grid(row=2, column=1)
+
+    confirm_label.grid(row=3, column=0, padx=20, pady=10)
+    confirm_entry.grid(row=3, column=1)
+
+    tkinter.Button(
+        reg, text="Create Account", bg="#0C1155", fg="#7968A1",
+        font=("Arial", 14), command=create_account
+    ).grid(row=4, column=0, columnspan=2, pady=20)
+
+# Main UI
+tkinter.Button(
+    window, text="Create Account", bg="#0C1155", fg="#7968A1",
+    font=("Arial", 16), command=open_register_window
+).pack(pady=200)
+
+# ----------------------------- SPRINT 3 ADDITIONS -----------------------------
+
+# Simple medication profile + calendar structure
+medications = ["Ibuprofen"]
+calendar_medications = {}  # Example: {"2025-03-20": {"med": "Ibuprofen", "start": "...", "end": "..."}}
+
+def open_add_medication():
+    add = tkinter.Toplevel(window)
+    add.title("Add Medication")
+    add.geometry("380x300")
+    add.configure(bg="#0C1155")
+
+    tk_label = lambda text: tkinter.Label(add, text=text, bg="#0C1155", fg="#7968A1", font=("Arial", 14))
+    tk_entry = lambda: tkinter.Entry(add, font=("Arial", 14), width=25)
+
+    med_label = tk_label("Medication")
+    med_label.grid(row=0, column=0, padx=20, pady=10)
+    med_entry = tk_entry()
+    med_entry.grid(row=0, column=1)
+
+    start_label = tk_label("Start Date (YYYY-MM-DD)")
+    start_label.grid(row=1, column=0, padx=20, pady=10)
+    start_entry = tk_entry()
+    start_entry.grid(row=1, column=1)
+
+    end_label = tk_label("End Date (YYYY-MM-DD)")
+    end_label.grid(row=2, column=0, padx=20, pady=10)
+    end_entry = tk_entry()
+    end_entry.grid(row=2, column=1)
+
+    def save_med():
+        med = med_entry.get()
+        start = start_entry.get()
+        end = end_entry.get()
+
+        if med == "" or start == "":
+            messagebox.showerror("Error", "All fields must be completed.")
+            return
+
+        if med not in medications:
+            if messagebox.askyesno("Create New", "This medication does not exist. Create new medication?"):
+                medications.append(med)
+            else:
+                return
+
+        if end != "" and end < start:
+            messagebox.showerror("Error", "Please enter a valid date range.")
+            return
+
+        calendar_medications[start] = {
+            "med": med,
+            "start": start,
+            "end": end if end != "" else "Indefinite"
+        }
+
+        messagebox.showinfo("Success", "Medication added successfully.")
+        add.destroy()
+
+    tkinter.Button(
+        add, text="Add Medication", bg="#0C1155", fg="#7968A1",
+        font=("Arial", 14), command=save_med
+    ).grid(row=4, column=0, columnspan=2, pady=20)
+
+# Sprint 3 button
+tkinter.Button(
+    window, text="Add Medication", bg="#0C1155", fg="#7968A1",
+    font=("Arial", 16), command=open_add_medication
+).pack()
+
+# ------------------------------------------------------------------------------
+
+window.mainloop()
